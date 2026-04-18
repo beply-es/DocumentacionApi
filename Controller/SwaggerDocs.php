@@ -53,8 +53,8 @@ class SwaggerDocs extends Controller
                 <input type="text" id="api-search" placeholder="Filtrar el schema por cualquier texto (URL, descripción, método...)" />
             </div>
             <div id="swagger-ui"></div>
-            <link rel="stylesheet" href="' . FS_ROUTE . '/Plugins/Swagger/Assets/css/swagger-ui.min.css">
-            <script src="' . FS_ROUTE . '/Plugins/Swagger/Assets/js/swagger-ui-bundle.min.js"></script>
+            <link rel="stylesheet" href="' . FS_ROUTE . '/Plugins/DocumentacionAPI/Assets/css/swagger-ui.min.css">
+            <script src="' . FS_ROUTE . '/Plugins/DocumentacionAPI/Assets/js/swagger-ui-bundle.min.js"></script>
             <style>
                 body { margin: 0; padding: 0px; }
                 .swagger-ui .topbar { display: none }
@@ -154,7 +154,7 @@ class SwaggerDocs extends Controller
         }
         
         // Generamos la documentación dinámica
-        $generator = new \FacturaScripts\Plugins\Swagger\Lib\APIDocGenerator();
+        $generator = new \FacturaScripts\Plugins\DocumentacionAPI\Lib\APIDocGenerator();
         $newSpec = $generator->generate();
         
         // Fusionamos con el spec existente
@@ -163,8 +163,12 @@ class SwaggerDocs extends Controller
         $spec['tags'] = $newSpec['tags'] ?? [];
         
         // Actualizamos la URL del servidor con la actual
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+            || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+            ? 'https' : 'http';
         $spec['servers'] = [[
-            'url' => rtrim($this->request->getSchemeAndHttpHost() . $this->request->getBasePath(), '/'),
+            'url' => rtrim($scheme . '://' . $this->request->host() . FS_ROUTE, '/'),
             'description' => 'API Server'
         ]];
 

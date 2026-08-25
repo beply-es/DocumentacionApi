@@ -34,8 +34,9 @@ final class CompatibilityContractTest extends TestCase
         self::assertStringContainsString('/Plugins/DocumentacionAPI/Assets/css/swagger-ui.min.css', $controller);
         self::assertStringContainsString('/Plugins/DocumentacionAPI/Assets/js/swagger-ui-bundle.min.js', $controller);
         self::assertStringContainsString('FacturaScripts\\Plugins\\DocumentacionAPI\\Lib\\APIDocGenerator', $controller);
+        self::assertMatchesRegularExpression('/public\\s+string\\s+\\$content\\s*=\\s*[\'\"]{2}/', $controller);
         self::assertDoesNotMatchRegularExpression('/request->query->get\(/', $controller);
-        self::assertMatchesRegularExpression('/request(?:\(\))?->query\(/', $controller);
+        self::assertStringContainsString('$this->request()->query(', $controller);
         self::assertStringContainsString('FacturaScripts\\Core\\Request', $generator);
         self::assertStringContainsString('FacturaScripts\\Core\\Response', $generator);
         self::assertStringNotContainsString('Symfony\\Component\\HttpFoundation', $generator);

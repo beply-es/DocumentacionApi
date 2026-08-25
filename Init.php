@@ -17,7 +17,7 @@
 
 namespace FacturaScripts\Plugins\DocumentacionAPI;
 
-use FacturaScripts\Core\Base\InitClass;
+use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Core\Kernel;
 use FacturaScripts\Plugins\DocumentacionAPI\Lib\APIDocGenerator;
 
@@ -61,12 +61,12 @@ class Init extends InitClass
             'openapi' => '3.0.0',
             'info' => [
                 'title' => 'FacturaScripts API',
-                'version' => '1.0.0',
-                'description' => 'Todas las rutas empiezan por /api/3. Requiere token en cabecera. Los POST y PUT usan form-data, no JSON. Filtros disponibles en GET: filter=campo:valor, order=campo:desc, offset=0&limit=50'
+                'version' => '1.2.0',
+                'description' => 'Todas las rutas empiezan por /api/3. Requiere token en cabecera. Los POST y PUT usan datos de formulario, no JSON. Filtros disponibles en GET: filter=campo:valor, order=campo:desc, offset=0&limit=50'
             ],
             'servers' => [
                 [
-                    'url' => '{schema}://{host}/api/3',
+                    'url' => '{schema}://{host}' . FS_ROUTE,
                     'description' => 'API Server',
                     'variables' => [
                         'schema' => [
@@ -80,7 +80,9 @@ class Init extends InitClass
                 ]
             ],
             'paths' => $openapi['paths'] ?? [],
+            'tags' => $openapi['tags'] ?? [],
             'components' => [
+                'schemas' => $openapi['components']['schemas'] ?? [],
                 'securitySchemes' => [
                     'ApiKeyAuth' => [
                         'type' => 'apiKey',

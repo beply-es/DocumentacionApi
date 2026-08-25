@@ -18,10 +18,11 @@
 namespace FacturaScripts\Plugins\DocumentacionAPI\Controller;
 
 use FacturaScripts\Core\Base\Controller;
-use FacturaScripts\Core\Tools;
 
 class SwaggerDocs extends Controller
 {
+    public string $content = '';
+
     public function getPageData(): array
     {
         $data = parent::getPageData();
@@ -36,7 +37,7 @@ class SwaggerDocs extends Controller
         parent::privateCore($response, $user, $permissions);
 
         // Si es una petición para obtener el JSON de la API
-        if ($this->request->query->get('action') === 'get-json') {
+        if ($this->request()->query('action') === 'get-json') {
             $this->sendJSON();
             die();
         }
@@ -53,8 +54,8 @@ class SwaggerDocs extends Controller
                 <input type="text" id="api-search" placeholder="Filtrar el schema por cualquier texto (URL, descripción, método...)" />
             </div>
             <div id="swagger-ui"></div>
-            <link rel="stylesheet" href="' . FS_ROUTE . '/Plugins/Swagger/Assets/css/swagger-ui.min.css">
-            <script src="' . FS_ROUTE . '/Plugins/Swagger/Assets/js/swagger-ui-bundle.min.js"></script>
+            <link rel="stylesheet" href="' . FS_ROUTE . '/Plugins/DocumentacionAPI/Assets/css/swagger-ui.min.css">
+            <script src="' . FS_ROUTE . '/Plugins/DocumentacionAPI/Assets/js/swagger-ui-bundle.min.js"></script>
             <style>
                 body { margin: 0; padding: 0px; }
                 .swagger-ui .topbar { display: none }
@@ -154,7 +155,7 @@ class SwaggerDocs extends Controller
         }
         
         // Generamos la documentación dinámica
-        $generator = new \FacturaScripts\Plugins\Swagger\Lib\APIDocGenerator();
+        $generator = new \FacturaScripts\Plugins\DocumentacionAPI\Lib\APIDocGenerator();
         $newSpec = $generator->generate();
         
         // Fusionamos con el spec existente
@@ -163,13 +164,19 @@ class SwaggerDocs extends Controller
         $spec['tags'] = $newSpec['tags'] ?? [];
         
         // Actualizamos la URL del servidor con la actual
+        $forwardedProtocol = strtolower((string)$this->request()->header('X-Forwarded-Proto'));
+        $protocol = $forwardedProtocol === 'https'
+            || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            ? 'https'
+            : 'http';
+        $host = $this->request()->host() ?: 'localhost';
         $spec['servers'] = [[
-            'url' => rtrim($this->request->getSchemeAndHttpHost() . $this->request->getBasePath(), '/'),
+            'url' => rtrim($protocol . '://' . $host . FS_ROUTE, '/'),
             'description' => 'API Server'
         ]];
 
         // Aplicamos filtro si existe
-        $filter = $this->request->query->get('filter');
+        $filter = $this->request()->query('filter');
         if (!empty($filter)) {
             $filteredPaths = [];
             $filteredSchemas = [];
@@ -233,4 +240,4 @@ class SwaggerDocs extends Controller
         // Enviamos el JSON
         echo json_encode($spec, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
-} 
+}

@@ -1,0 +1,4 @@
+.phpunit.result.cache
+tests/node_modules/
+tests/playwright-report/
+tests/test-results/

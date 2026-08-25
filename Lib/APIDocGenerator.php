@@ -18,12 +18,12 @@
 namespace FacturaScripts\Plugins\DocumentacionAPI\Lib;
 
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Where;
+use FacturaScripts\Core\Request;
+use FacturaScripts\Core\Response;
 use FacturaScripts\Core\Model\Base\ModelClass;
 use FacturaScripts\Core\Controller\ApiRoot;
 use FacturaScripts\Core\Lib\API\APIModel;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use SimpleXMLElement;
 
 class APIDocGenerator
@@ -42,8 +42,8 @@ class APIDocGenerator
             ]
         ];
         
-        $this->request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
-        $this->response = new \Symfony\Component\HttpFoundation\Response();
+        $this->request = Request::createFromGlobals();
+        $this->response = new Response();
     }
 
     public function generate(): array
@@ -114,45 +114,39 @@ class APIDocGenerator
                     'tags' => ['Custom'],
                     'summary' => 'Crear factura de cliente',
                     'description' => 'Crea una nueva factura de cliente con sus líneas',
-                    'parameters' => [
+                    'requestBody' => $this->generateFormRequestBody([
                         [
                             'name' => 'codcliente',
-                            'in' => 'formData',
                             'description' => 'Código del cliente',
                             'required' => true,
                             'schema' => ['type' => 'string']
                         ],
                         [
                             'name' => 'codalmacen',
-                            'in' => 'formData',
                             'description' => 'Código del almacén (opcional)',
                             'required' => false,
                             'schema' => ['type' => 'string']
                         ],
                         [
                             'name' => 'fecha',
-                            'in' => 'formData',
                             'description' => 'Fecha de la factura (opcional)',
                             'required' => false,
                             'schema' => ['type' => 'string', 'format' => 'date']
                         ],
                         [
                             'name' => 'hora',
-                            'in' => 'formData',
                             'description' => 'Hora de la factura (opcional)',
                             'required' => false,
                             'schema' => ['type' => 'string', 'format' => 'time']
                         ],
                         [
                             'name' => 'coddivisa',
-                            'in' => 'formData',
                             'description' => 'Código de la divisa (opcional)',
                             'required' => false,
                             'schema' => ['type' => 'string']
                         ],
                         [
                             'name' => 'lineas',
-                            'in' => 'formData',
                             'description' => 'Array JSON de líneas de la factura',
                             'required' => true,
                             'schema' => [
@@ -173,12 +167,11 @@ class APIDocGenerator
                         ],
                         [
                             'name' => 'pagada',
-                            'in' => 'formData',
                             'description' => 'Marcar la factura como pagada',
                             'required' => false,
                             'schema' => ['type' => 'boolean']
                         ]
-                    ],
+                    ]),
                     'responses' => [
                         '200' => [
                             'description' => 'Factura creada correctamente',
@@ -188,7 +181,11 @@ class APIDocGenerator
                                         'type' => 'object',
                                         'properties' => [
                                             'doc' => ['type' => 'object', 'description' => 'Datos de la factura'],
-                                            'lines' => ['type' => 'array', 'description' => 'Líneas de la factura']
+                                            'lines' => [
+                                                'type' => 'array',
+                                                'description' => 'Líneas de la factura',
+                                                'items' => ['type' => 'object']
+                                            ]
                                         ]
                                     ]
                                 ]
@@ -234,7 +231,7 @@ class APIDocGenerator
                     'parameters' => [
                         [
                             'name' => 'code',
-                            'in' => 'path',
+                            'in' => 'query',
                             'description' => 'ID de la factura',
                             'required' => true,
                             'schema' => ['type' => 'string']
@@ -332,15 +329,16 @@ class APIDocGenerator
                             'description' => 'Token de autenticación',
                             'required' => true,
                             'schema' => ['type' => 'string']
-                        ],
+                        ]
+                    ],
+                    'requestBody' => $this->generateFormRequestBody([
                         [
                             'name' => 'data',
-                            'in' => 'formData',
                             'description' => 'Datos en formato form-data',
                             'required' => true,
                             'schema' => ['type' => 'object']
                         ]
-                    ],
+                    ]),
                     'responses' => [
                         '200' => [
                             'description' => 'Operación completada',
@@ -560,18 +558,7 @@ class APIDocGenerator
         $properties = $this->getModelProperties($resource);
         
         // Añadimos el schema del modelo con propiedades requeridas
-        $requiredProperties = [];
-        foreach ($properties as $name => $property) {
-            if ($property['required'] ?? false) {
-                $requiredProperties[] = $name;
-            }
-        }
-        
-        $this->openapi['components']['schemas'][$resource] = [
-            'type' => 'object',
-            'properties' => $properties,
-            'required' => $requiredProperties
-        ];
+        $this->openapi['components']['schemas'][$resource] = $this->generateObjectSchema($properties);
 
         // Creamos un ejemplo completo del modelo
         $example = [];
@@ -650,7 +637,7 @@ class APIDocGenerator
             'tags' => [$tag],
             'summary' => 'Crear nuevo ' . $resource,
             'description' => 'Crea un nuevo ' . $resource,
-            'parameters' => $this->generateParameters($properties),
+            'requestBody' => $this->generateRequestBody($properties),
             'responses' => [
                 '201' => [
                     'description' => $resource . ' creado correctamente',
@@ -712,15 +699,15 @@ class APIDocGenerator
                 'tags' => [$tag],
                 'summary' => 'Actualizar ' . $resource,
                 'description' => 'Actualiza un ' . $resource . ' existente',
-                'parameters' => array_merge(
-                    [[
+                'parameters' => [
+                    [
                         'name' => 'id',
                         'in' => 'path',
                         'required' => true,
                         'schema' => ['type' => 'string']
-                    ]],
-                    $this->generateParameters($properties)
-                ),
+                    ]
+                ],
+                'requestBody' => $this->generateRequestBody($properties),
                 'responses' => [
                     '200' => [
                         'description' => $resource . ' actualizado',
@@ -761,31 +748,59 @@ class APIDocGenerator
         ];
     }
 
-    private function generateParameters(array $properties): array
+    private function generateFormRequestBody(array $parameters): array
     {
-        $parameters = [];
-        foreach ($properties as $name => $property) {
-            $parameters[] = [
-                'name' => $name,
-                'in' => 'formData',
-                'description' => $property['description'],
-                'required' => $property['required'] ?? false,
-                'schema' => [
-                    'type' => $property['type']
-                ]
-            ];
-            
-            // Añadimos el ejemplo si existe
-            if (isset($property['example'])) {
-                $parameters[count($parameters) - 1]['example'] = $property['example'];
-            }
-            
-            // Añadimos la longitud máxima si existe
-            if (isset($property['maxLength'])) {
-                $parameters[count($parameters) - 1]['schema']['maxLength'] = $property['maxLength'];
+        $properties = [];
+        foreach ($parameters as $parameter) {
+            $name = $parameter['name'];
+            $properties[$name] = $parameter['schema'];
+            $properties[$name]['description'] = $parameter['description'] ?? $name;
+            $properties[$name]['required'] = $parameter['required'] ?? false;
+
+            if (isset($parameter['example'])) {
+                $properties[$name]['example'] = $parameter['example'];
             }
         }
-        return $parameters;
+
+        return $this->generateRequestBody($properties, 'multipart/form-data');
+    }
+
+    private function generateObjectSchema(array $properties): array
+    {
+        $required = [];
+        $schemaProperties = [];
+
+        foreach ($properties as $name => $property) {
+            if ($property['required'] ?? false) {
+                $required[] = $name;
+            }
+
+            unset($property['required']);
+            $schemaProperties[$name] = $property;
+        }
+
+        $schema = [
+            'type' => 'object',
+            'properties' => $schemaProperties
+        ];
+
+        if ($required !== []) {
+            $schema['required'] = $required;
+        }
+
+        return $schema;
+    }
+
+    private function generateRequestBody(array $properties, string $contentType = 'application/x-www-form-urlencoded'): array
+    {
+        return [
+            'required' => true,
+            'content' => [
+                $contentType => [
+                    'schema' => $this->generateObjectSchema($properties)
+                ]
+            ]
+        ];
     }
 
     private function getApiPath(string $modelName): string
@@ -856,4 +871,4 @@ class APIDocGenerator
         
         return $description;
     }
-} 
+}

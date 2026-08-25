@@ -1,0 +1,14 @@
+{
+  "name": "documentacionapi-tests",
+  "version": "1.2.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "@playwright/test": "1.57.0",
+    "@types/node": "25.0.9",
+    "typescript": "5.9.3"
+  }
+}

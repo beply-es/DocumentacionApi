@@ -1,0 +1,6 @@
+/.gitattributes export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/Test export-ignore
+/phpunit.unit.xml.dist export-ignore
+/tests export-ignore

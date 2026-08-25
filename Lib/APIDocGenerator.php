@@ -18,12 +18,12 @@
 namespace FacturaScripts\Plugins\DocumentacionAPI\Lib;
 
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
+use FacturaScripts\Core\Where;
+use FacturaScripts\Core\Request;
+use FacturaScripts\Core\Response;
 use FacturaScripts\Core\Model\Base\ModelClass;
 use FacturaScripts\Core\Controller\ApiRoot;
 use FacturaScripts\Core\Lib\API\APIModel;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use SimpleXMLElement;
 
 class APIDocGenerator
@@ -42,8 +42,8 @@ class APIDocGenerator
             ]
         ];
         
-        $this->request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
-        $this->response = new \Symfony\Component\HttpFoundation\Response();
+        $this->request = Request::createFromGlobals();
+        $this->response = new Response();
     }
 
     public function generate(): array
@@ -856,4 +856,4 @@ class APIDocGenerator
         
         return $description;
     }
-} 
+}

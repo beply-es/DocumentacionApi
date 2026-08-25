@@ -17,7 +17,7 @@
 
 namespace FacturaScripts\Plugins\DocumentacionAPI;
 
-use FacturaScripts\Core\Base\InitClass;
+use FacturaScripts\Core\Template\InitClass;
 use FacturaScripts\Core\Kernel;
 use FacturaScripts\Plugins\DocumentacionAPI\Lib\APIDocGenerator;
 

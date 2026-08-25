@@ -18,10 +18,11 @@
 namespace FacturaScripts\Plugins\DocumentacionAPI\Controller;
 
 use FacturaScripts\Core\Base\Controller;
-use FacturaScripts\Core\Tools;
 
 class SwaggerDocs extends Controller
 {
+    public string $content = '';
+
     public function getPageData(): array
     {
         $data = parent::getPageData();
@@ -36,7 +37,7 @@ class SwaggerDocs extends Controller
         parent::privateCore($response, $user, $permissions);
 
         // Si es una petición para obtener el JSON de la API
-        if ($this->request->query('action') === 'get-json') {
+        if ($this->request()->query('action') === 'get-json') {
             $this->sendJSON();
             die();
         }
@@ -163,15 +164,19 @@ class SwaggerDocs extends Controller
         $spec['tags'] = $newSpec['tags'] ?? [];
         
         // Actualizamos la URL del servidor con la actual
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $forwardedProtocol = strtolower((string)$this->request()->header('X-Forwarded-Proto'));
+        $protocol = $forwardedProtocol === 'https'
+            || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            ? 'https'
+            : 'http';
+        $host = $this->request()->host() ?: 'localhost';
         $spec['servers'] = [[
-            'url' => $protocol . '://' . $host . FS_ROUTE,
+            'url' => rtrim($protocol . '://' . $host . FS_ROUTE, '/'),
             'description' => 'API Server'
         ]];
 
         // Aplicamos filtro si existe
-        $filter = $this->request->query('filter');
+        $filter = $this->request()->query('filter');
         if (!empty($filter)) {
             $filteredPaths = [];
             $filteredSchemas = [];

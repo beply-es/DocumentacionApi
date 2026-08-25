@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import SwaggerParser from '@apidevtools/swagger-parser';
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8062';
 const LOGIN_USER = process.env.E2E_USER || 'admin';
@@ -47,6 +48,7 @@ test('DocumentacionAPI publishes a functional Swagger UI', async ({ page }) => {
     expect(Object.keys(spec.paths ?? {}).length).toBeGreaterThan(100);
     expect(Object.keys(spec.components?.schemas ?? {}).length).toBeGreaterThan(50);
     expect(spec.servers?.[0]?.url).toBe(BASE_URL);
+    await SwaggerParser.validate(spec);
 
     const cssResponse = await page.request.get(`${BASE_URL}/Plugins/DocumentacionAPI/Assets/css/swagger-ui.min.css`);
     const jsResponse = await page.request.get(`${BASE_URL}/Plugins/DocumentacionAPI/Assets/js/swagger-ui-bundle.min.js`);

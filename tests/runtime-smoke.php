@@ -34,7 +34,11 @@ $storedSpec = is_file($jsonFile)
     : null;
 $assert(is_array($storedSpec), 'Stored OpenAPI document is not valid JSON');
 $assert(($storedSpec['openapi'] ?? null) === '3.0.0', 'Stored OpenAPI version is not 3.0.0');
+$assert(($storedSpec['info']['version'] ?? null) === '1.2.0', 'Stored API documentation version is not 1.2.0');
 $assert(count($storedSpec['paths'] ?? []) > 100, 'Stored OpenAPI document has too few paths');
+$assert(count($storedSpec['components']['schemas'] ?? []) > 50, 'Stored OpenAPI document has too few schemas');
+$assert(count($storedSpec['tags'] ?? []) === 2, 'Stored OpenAPI tags are incomplete');
+$assert(($storedSpec['servers'][0]['url'] ?? null) === '{schema}://{host}' . FS_ROUTE, 'Stored OpenAPI server URL duplicates the API prefix');
 $assert(($storedSpec['components']['securitySchemes']['ApiKeyAuth']['name'] ?? null) === 'token', 'API token security scheme is missing');
 
 $generator = new \FacturaScripts\Dinamic\Lib\APIDocGenerator();
